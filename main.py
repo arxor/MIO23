@@ -42,11 +42,11 @@ def create_gui():
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
 
-    window_width = int(screen_width / 1.5)
-    window_height = int(screen_height / 1.5)
+    window_width = int(screen_width / 1.2)
+    window_height = int(screen_height / 1.2)
 
     center_x = int(screen_width/2 - window_width / 2)
-    center_y = int(screen_height/2 - window_height / 2)
+    center_y = int(screen_height/2 - window_height / 2) - 50
 
     root.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
 
@@ -79,24 +79,25 @@ def create_gui():
     abp2 = Plot(root, 'Разгибатели', maxlen=50, time=1)
     ref = Plot(root, 'Опорное напряжение', maxlen=500, time=10)
     ax = Plot(root, 'Ускорение x', maxlen=50, time=1)
-    # ay = Plot(root, 'Ускорение y', maxlen=50, time=1)
-    # az = Plot(root, 'Ускорение z', maxlen=50, time=1)
-    # gx = Plot(root, 'Угловая скорость x', maxlen=50, time=1)
-    # gy = Plot(root, 'Угловая скорость y', maxlen=50, time=1)
-    # gz = Plot(root, 'Угловая скорость z', maxlen=50, time=1)
+    ay = Plot(root, 'Ускорение y', maxlen=50, time=1)
+    az = Plot(root, 'Ускорение z', maxlen=50, time=1)
+    gx = Plot(root, 'Угловая скорость x', maxlen=50, time=1)
+    gy = Plot(root, 'Угловая скорость y', maxlen=50, time=1)
+    gz = Plot(root, 'Угловая скорость z', maxlen=50, time=1)
 
     # Настройка положения виджетов в окне
     option_menu.grid(row=1, column=1)
     connect_button.grid(row=1, column=2)
+
     abp1.set_pos(row=2, column=1)
     abp2.set_pos(row=2, column=2)
-    ref.set_pos(row=2, column=3)
-    ax.set_pos(row=3, column=1)
-    # ay.set_pos(row=3, column=2)
-    # az.set_pos(row=3, column=3)
-    # gx.set_pos(row=4, column=1)
-    # gy.set_pos(row=4, column=2)
-    # gz.set_pos(row=4, column=3)
+    ref.set_pos(row=2, column=3, min_y=300, max_y=700)
+    ax.set_pos(row=3, column=1, min_y=-16384, max_y=16383)
+    ay.set_pos(row=3, column=2, min_y=-16384, max_y=16383)
+    az.set_pos(row=3, column=3, min_y=-16384, max_y=16383)
+    gx.set_pos(row=4, column=1, min_y=-16384, max_y=16383)
+    gy.set_pos(row=4, column=2, min_y=-16384, max_y=16383)
+    gz.set_pos(row=4, column=3, min_y=-16384, max_y=16383)
 
     return root
 
