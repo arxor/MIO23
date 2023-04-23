@@ -15,7 +15,9 @@ def change_port(bracelet, selected_com_port):
 def connect(bracelet, plot):
     bracelet.connect()
     if bracelet.serial.is_open:
+        plot.clear_data()
         plot.generate_data()
+        plot.update_plot()
     else:
         print("Не удалось подключиться к последовательному порту.")
 
@@ -24,8 +26,8 @@ def create_gui():
     bracelet = Bracelet()
     root = tk.Tk()
     root.title("Электромиографический браслет")
-    plot = Plot(root)
-    plot.bracelet = bracelet
+    plot = Plot(root, 'das', bracelet=bracelet, x_limit=50, maxlen=50)
+
 
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
@@ -41,7 +43,8 @@ def create_gui():
     frame = tk.Frame(root)
     frame.grid(row=1, column=1, sticky="nsew", padx=10, pady=10)
 
-    connect_button = tk.Button(frame, text="Подключиться", command=lambda: connect(bracelet, plot))
+    connect_button = tk.Button(frame, text="Подключиться",
+                               command=lambda: connect(bracelet, plot))
     connect_button.grid(column=0, row=0)
 
     com_ports = bracelet.get_ports()
@@ -50,7 +53,7 @@ def create_gui():
     selected_com_port.set("Выберите порт")
 
     option_menu = tk.OptionMenu(frame, selected_com_port, *com_ports,
-                                command=lambda v: change_port(bracelet, selected_com_port))
+                                command=lambda a: change_port(bracelet, selected_com_port))
 
     option_menu.grid(column=1, row=0)
     return root

@@ -1,44 +1,51 @@
 import tkinter as tk
-from tkinter import *
-from bracelet import Bracelet
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import matplotlib
-import numpy as np
 from collections import deque
-matplotlib.use('TkAgg')
-
-
+import random
+import numpy as np
 
 class Plot:
-    def __init__(self, master):
-        self.bracelet = None
-        self.master = master
-        self.fig, self.ax = plt.subplots()
+    def __init__(self, master, title, x_limit=500, y_limit=1023, maxlen=500, update_interval=10, bracelet=None):
+        # Создаем фигуру и оси
+        self.fig, self.ax = plt.subplots(figsize=(6, 4))
         self.ax.set_xlim([-10, 0])
-        self.ax.set_ylim([0, 1023])
-        self.line, = self.ax.plot([], [], lw=2) # lw = line width
-        self.y_data = deque([0] * 500, maxlen=500)
-        self.canvas = FigureCanvasTkAgg(self.fig, master=master)
-        self.canvas.get_tk_widget().grid(row=2, column=1)
-        self.update_interval = 50
-        self.animation = None
+        #self.ax.set_ylim([0, y_limit])
 
-    def update(self):
+        self.ax.set_title(title)
+        self.line, = self.ax.plot([], [], lw=0.5, marker='o')
+
+        self.maxlen = maxlen
+        # Создаем deque для хранения данных по оси y
+        self.y_data = deque([0] * self.maxlen, maxlen=self.maxlen)
+
+        # Создаем холст для отображения графика
+        self.canvas = FigureCanvasTkAgg(self.fig, master=master)
+        self.canvas.get_tk_widget().grid(column=1, row=2)
+
+        # Запускаем генерацию данных и обновление графика
+        self.update_interval = update_interval
+        self.bracelet = bracelet
+    # Функция для обновления данных на графике
+    def update_plot(self):
+        # Получаем последние значения данных
         y = list(self.y_data)
-        x = np.linspace(-10, 0, 500)
+        x = np.linspace(-10, 0, self.maxlen)
+        self.ax.set_ylim([min(y), max(y)])
         self.line.set_data(x, y)
         # Перерисовываем график
         self.canvas.draw()
+        # Запускаем таймер на update_interval мс для обновления графика
+        self.canvas.get_tk_widget().after(self.update_interval, self.update_plot)
 
+    # Функция для генерации новых данных
     def generate_data(self):
-        if self.animation:
-            # Генерируем новое значение и добавляем его в очередь)
-            new_data = int(self.bracelet.get_data().split()[0])
-            print(new_data)
-            self.y_data.append(new_data)
-            # Вызываем функцию обновления графика
-            self.update()
-            # Запускаем таймер на 50 мс
-            #self.master.after(self.update_interval, self.generate_data)
+        # Генерируем новое значение и добавляем его в очередь
+        new_value = int(self.bracelet.get_data().split()[1])
+        print(new_value)
+        self.y_data.append(new_value)
+        # Запускаем таймер на update_interval мс для генерации новых данных
+        self.canvas.get_tk_widget().after(self.update_interval, self.generate_data)
+
+    def clear_data(self):
+        self.y_data = deque([0] * self.maxlen, maxlen=self.maxlen)

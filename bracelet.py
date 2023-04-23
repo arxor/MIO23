@@ -8,7 +8,7 @@ class Bracelet:
 
         self.serial.baudrate = 57600
         self.serial.port = None
-        self.serial.timeout = 1
+        self.serial.timeout = 0.05
 
     def connect(self):
         if not self.serial.is_open:
@@ -28,6 +28,7 @@ class Bracelet:
                 ports.remove(port)
             else:
                 ports[ports.index(port)] = port.name
+        print(ports)
         return ports
 
     def get_data(self):
