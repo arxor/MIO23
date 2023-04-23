@@ -1,5 +1,7 @@
 import tkinter as tk
 from tkinter import StringVar
+
+import plot
 from bracelet import Bracelet
 from gui import Plot
 
@@ -12,23 +14,31 @@ def change_port(bracelet, selected_com_port):
     bracelet.serial.port = selected_com_port.get()
 
 
-def connect(bracelet, plot):
+def connect(bracelet):
     bracelet.connect()
     if bracelet.serial.is_open:
-        plot.clear_data()
-        plot.generate_data()
-        plot.update_plot()
+        Plot.start_plots()
     else:
         print("Не удалось подключиться к последовательному порту.")
 
+def on_closing():
+    # Действия при закрытии окна
+    print("Закрытие окна")
+    Plot.stop_plots()
+    root.destroy()  # закрыть окно
 
 def create_gui():
+    # Создание экземпляра класса Bracelet
     bracelet = Bracelet()
+
+    # Передача устройства в класс Plot
+    Plot.set_bracelet(bracelet)
+
+    # Создание главного окна
     root = tk.Tk()
+    # Название главного окна
     root.title("Электромиографический браслет")
-    plot = Plot(root, 'das', bracelet=bracelet, x_limit=50, maxlen=50)
-
-
+    # Настройки положения и размеров окна
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
 
@@ -40,22 +50,54 @@ def create_gui():
 
     root.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
 
+    # При закрытии окна вызывать функцию on_closing
+    root.protocol("WM_DELETE_WINDOW", on_closing)
+
+    # Создание виджета Frame
     frame = tk.Frame(root)
     frame.grid(row=1, column=1, sticky="nsew", padx=10, pady=10)
 
+    # Создание кнопки для подключения к устройству
     connect_button = tk.Button(frame, text="Подключиться",
-                               command=lambda: connect(bracelet, plot))
-    connect_button.grid(column=0, row=0)
+                               command=lambda: connect(bracelet))
 
+    # Создание выпадающего меню выбора ком-порта
     com_ports = bracelet.get_ports()
-
     selected_com_port = StringVar()
     selected_com_port.set("Выберите порт")
 
-    option_menu = tk.OptionMenu(frame, selected_com_port, *com_ports,
-                                command=lambda a: change_port(bracelet, selected_com_port))
+    if len(com_ports) == 0:
+        option_menu = tk.OptionMenu(frame, selected_com_port, "Нет доступных портов")
+        option_menu.config(state='disabled')
+        connect_button.config(state='disabled')
+    else:
+        option_menu = tk.OptionMenu(frame, selected_com_port, *com_ports,
+                                    command=lambda a: change_port(bracelet, selected_com_port))
 
-    option_menu.grid(column=1, row=0)
+    # Создание графиков
+    abp1 = Plot(root, 'Сгибатели', maxlen=50, time=1)
+    abp2 = Plot(root, 'Разгибатели', maxlen=50, time=1)
+    ref = Plot(root, 'Опорное напряжение', maxlen=500, time=10)
+    ax = Plot(root, 'Ускорение x', maxlen=50, time=1)
+    # ay = Plot(root, 'Ускорение y', maxlen=50, time=1)
+    # az = Plot(root, 'Ускорение z', maxlen=50, time=1)
+    # gx = Plot(root, 'Угловая скорость x', maxlen=50, time=1)
+    # gy = Plot(root, 'Угловая скорость y', maxlen=50, time=1)
+    # gz = Plot(root, 'Угловая скорость z', maxlen=50, time=1)
+
+    # Настройка положения виджетов в окне
+    option_menu.grid(row=1, column=1)
+    connect_button.grid(row=1, column=2)
+    abp1.set_pos(row=2, column=1)
+    abp2.set_pos(row=2, column=2)
+    ref.set_pos(row=2, column=3)
+    ax.set_pos(row=3, column=1)
+    # ay.set_pos(row=3, column=2)
+    # az.set_pos(row=3, column=3)
+    # gx.set_pos(row=4, column=1)
+    # gy.set_pos(row=4, column=2)
+    # gz.set_pos(row=4, column=3)
+
     return root
 
 
