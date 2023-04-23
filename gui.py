@@ -1,64 +1,44 @@
 import tkinter as tk
 from tkinter import *
 from bracelet import Bracelet
-from plot import plot
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib
+import numpy as np
+from collections import deque
 matplotlib.use('TkAgg')
 
 
-class GUI:
-    def __init__(self):
-        self.bracelet = Bracelet()
-        self.plot = plot()
-        self.root = tk.Tk()
-        self.root.title("Электромиографический браслет")
 
-        screen_width = self.root.winfo_screenwidth()
-        screen_height = self.root.winfo_screenheight()
+class Plot:
+    def __init__(self, master):
+        self.bracelet = None
+        self.master = master
+        self.fig, self.ax = plt.subplots()
+        self.ax.set_xlim([-10, 0])
+        self.ax.set_ylim([0, 1023])
+        self.line, = self.ax.plot([], [], lw=2) # lw = line width
+        self.y_data = deque([0] * 500, maxlen=500)
+        self.canvas = FigureCanvasTkAgg(self.fig, master=master)
+        self.canvas.get_tk_widget().grid(row=2, column=1)
+        self.update_interval = 50
+        self.animation = None
 
-        window_width = int(screen_width / 1.5)
-        window_height = int(screen_height / 1.5)
+    def update(self):
+        y = list(self.y_data)
+        x = np.linspace(-10, 0, 500)
+        self.line.set_data(x, y)
+        # Перерисовываем график
+        self.canvas.draw()
 
-        center_x = int(screen_width/2 - window_width / 2)
-        center_y = int(screen_height/2 - window_height / 2)
-
-        self.root.geometry(f'{window_width}x{window_height}+{center_x}+{center_y}')
-
-        # root.attributes('-alpha', 0.9)
-        # root.iconbitmap('./assets/pythontutorial.ico')
-
-        self.connect = tk.Button(text="Подключиться", command=self.connect)
-        self.connect.grid(column=2, row=1)
-
-        self.com_ports = self.bracelet.get_ports()
-
-        self.selected_com_port = StringVar()
-        self.selected_com_port.set("Выберите порт")
-
-        self.option_menu = tk.OptionMenu(self.root, self.selected_com_port, *self.com_ports,
-                                         command= lambda v: self.change_port())
-
-        self.option_menu.grid(column=1, row=1)
-
-
-
-    def show_window(self):
-        self.root.mainloop()
-
-    def change_port(self):
-        self.bracelet.serial.port = self.selected_com_port.get()
-
-    def connect(self):
-        self.bracelet.connect()
-        if self.bracelet.serial.is_open:
-            self.plotter()
-        else:
-            print("Не удалось подключиться к последовательному порту.")
-    def plotter(self):
-        self.plotter.animation.event_source.start()(int(self.bracelet.get_data().split()[0]))
-        self.root.after(20, self.plotter)
-
-
+    def generate_data(self):
+        if self.animation:
+            # Генерируем новое значение и добавляем его в очередь)
+            new_data = int(self.bracelet.get_data().split()[0])
+            print(new_data)
+            self.y_data.append(new_data)
+            # Вызываем функцию обновления графика
+            self.update()
+            # Запускаем таймер на 50 мс
+            #self.master.after(self.update_interval, self.generate_data)
