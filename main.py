@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import StringVar
 
-import plot
 from bracelet import Bracelet
 from gui import Plot
+from config import *
 
 
 def show_window(root):
@@ -19,13 +19,15 @@ def connect(bracelet):
     if bracelet.serial.is_open:
         Plot.start_plots()
     else:
-        print("Не удалось подключиться к последовательному порту.")
+        print(MESSAGE_CANT_CONNECT)
+
 
 def on_closing():
     # Действия при закрытии окна
-    print("Закрытие окна")
+    print(MESSAGE_CLOSE_WINDOW)
     Plot.stop_plots()
     root.destroy()  # закрыть окно
+
 
 def create_gui():
     # Создание экземпляра класса Bracelet
@@ -37,13 +39,13 @@ def create_gui():
     # Создание главного окна
     root = tk.Tk()
     # Название главного окна
-    root.title("Электромиографический браслет")
+    root.title(WINDOW_TITLE)
     # Настройки положения и размеров окна
     screen_width = root.winfo_screenwidth()
     screen_height = root.winfo_screenheight()
 
-    window_width = int(screen_width / 1.2)
-    window_height = int(screen_height / 1.2)
+    window_width = int(screen_width / WINDOWSIZE_DIVIDER)
+    window_height = int(screen_height / WINDOWSIZE_DIVIDER)
 
     center_x = int(screen_width/2 - window_width / 2)
     center_y = int(screen_height/2 - window_height / 2) - 50
@@ -58,16 +60,16 @@ def create_gui():
     frame.grid(row=1, column=1, sticky="nsew", padx=10, pady=10)
 
     # Создание кнопки для подключения к устройству
-    connect_button = tk.Button(frame, text="Подключиться",
+    connect_button = tk.Button(frame, text=BUTTON_CONNECT,
                                command=lambda: connect(bracelet))
 
     # Создание выпадающего меню выбора ком-порта
     com_ports = bracelet.get_ports()
     selected_com_port = StringVar()
-    selected_com_port.set("Выберите порт")
+    selected_com_port.set(OPTIONMENU_COM_CHOOSE)
 
     if len(com_ports) == 0:
-        option_menu = tk.OptionMenu(frame, selected_com_port, "Нет доступных портов")
+        option_menu = tk.OptionMenu(frame, selected_com_port, OPTIONMENU_NO_COM)
         option_menu.config(state='disabled')
         connect_button.config(state='disabled')
     else:
@@ -75,15 +77,15 @@ def create_gui():
                                     command=lambda a: change_port(bracelet, selected_com_port))
 
     # Создание графиков
-    abp1 = Plot(root, 'Сгибатели', maxlen=50, time=1)
-    abp2 = Plot(root, 'Разгибатели', maxlen=50, time=1)
-    ref = Plot(root, 'Опорное напряжение', maxlen=500, time=10)
-    ax = Plot(root, 'Ускорение x', maxlen=50, time=1)
-    ay = Plot(root, 'Ускорение y', maxlen=50, time=1)
-    az = Plot(root, 'Ускорение z', maxlen=50, time=1)
-    gx = Plot(root, 'Угловая скорость x', maxlen=50, time=1)
-    gy = Plot(root, 'Угловая скорость y', maxlen=50, time=1)
-    gz = Plot(root, 'Угловая скорость z', maxlen=50, time=1)
+    abp1 = Plot(root, PLOTTITLE_1, maxlen=50, time=1)
+    abp2 = Plot(root, PLOTTITLE_2, maxlen=50, time=1)
+    ref = Plot(root, PLOTTITLE_3, maxlen=500, time=10)
+    ax = Plot(root, PLOTTITLE_4, maxlen=50, time=1)
+    ay = Plot(root, PLOTTITLE_5, maxlen=50, time=1)
+    az = Plot(root, PLOTTITLE_6, maxlen=50, time=1)
+    gx = Plot(root, PLOTTITLE_7, maxlen=50, time=1)
+    gy = Plot(root, PLOTTITLE_8, maxlen=50, time=1)
+    gz = Plot(root, PLOTTITLE_9, maxlen=50, time=1)
 
     # Настройка положения виджетов в окне
     option_menu.grid(row=1, column=1)

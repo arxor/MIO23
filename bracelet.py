@@ -15,9 +15,8 @@ class Bracelet:
             try:
                 self.serial.open()
             except:
-                print("CAN'T CONNECT")
-        else:
-            print("Already_connected")
+                pass
+
 
 
 
