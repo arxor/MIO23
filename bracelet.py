@@ -6,11 +6,22 @@ import serial.tools.list_ports
 
 import processing
 from config import *
+from collections import deque
 
 import threading
 
+
 class Bracelet:
     data = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    abp1 = deque([0] * 1000, maxlen=1000)
+    abp2 = deque([0] * 1000, maxlen=1000)
+    ref = deque([0] * 1000, maxlen=1000)
+    ax = deque([0] * 1000, maxlen=1000)
+    ay = deque([0] * 1000, maxlen=1000)
+    az = deque([0] * 1000, maxlen=1000)
+    gx = deque([0] * 1000, maxlen=1000)
+    gy = deque([0] * 1000, maxlen=1000)
+    gz = deque([0] * 1000, maxlen=1000)
 
     def __init__(self):
         self.serial = serial.Serial()
@@ -43,6 +54,16 @@ class Bracelet:
                     self.data[i] = int(self.data[i])
             while len(self.data) < 9:
                 self.data.append(0)
+            print(self.data)
+            self.abp1.append(self.data[0])
+            self.abp2.append(self.data[1])
+            self.ref.append(self.data[2])
+            self.ax.append(self.data[3])
+            self.ay.append(self.data[4])
+            self.az.append(self.data[5])
+            self.gx.append(self.data[6])
+            self.gy.append(self.data[7])
+            self.gz.append(self.data[8])
             processing.process(self)
             time.sleep(0.01)
 
@@ -50,29 +71,29 @@ class Bracelet:
         thr1 = threading.Thread(target=self.read_data)
         thr1.start()
 
-    def get_abp1(self):
-        return self.data[0]
+    def get_abp1(self, n):
+        return list(self.abp1)[-n:]
 
-    def get_abp2(self):
-        return self.data[1]
+    def get_abp2(self, n):
+        return list(self.abp2)[-n:]
 
-    def get_ref(self):
-        return self.data[2]
+    def get_ref(self, n):
+        return list(self.ref)[-n:]
 
-    def get_ax(self):
-        return self.data[3]
+    def get_ax(self, n):
+        return list(self.ax)[-n:]
 
-    def get_ay(self):
-        return self.data[4]
+    def get_ay(self, n):
+        return list(self.ay)[-n:]
 
-    def get_az(self):
-        return self.data[5]
+    def get_az(self, n):
+        return list(self.az)[-n:]
 
-    def get_gx(self):
-        return self.data[6]
+    def get_gx(self, n):
+        return list(self.gx)[-n:]
 
-    def get_gy(self):
-        return self.data[7]
+    def get_gy(self, n):
+        return list(self.gy)[-n:]
 
-    def get_gz(self):
-        return self.data[8]
+    def get_gz(self, n):
+        return list(self.gz)[-n:]

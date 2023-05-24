@@ -17,7 +17,7 @@ from processing import *
 class Plot:
     plots = []
 
-    def __init__(self, master, stream, title, time=10, maxlen=500, update_interval=20, autoscale=0):
+    def __init__(self, master, stream, title="chart", time=10, maxlen=500, update_interval=20, autoscale=0):
         # Создаем фигуру и оси
         self.fig, self.ax = plt.subplots(figsize=PLOT_FIGSIZE)
         self.ax.set_xlim([-time, 0])
@@ -31,8 +31,7 @@ class Plot:
         self.line, = self.ax.plot([], [], lw=0.5)
 
         self.maxlen = maxlen
-        # Создаем deque для хранения данных по оси y
-        self.y_data = deque([0] * self.maxlen, maxlen=self.maxlen)
+
 
         # Создаем холст для отображения графика
         self.canvas = FigureCanvasTkAgg(self.fig, master=master)
@@ -67,12 +66,12 @@ class Plot:
         self.canvas.draw()  # перерисовываем график
 
     def update_plot(self):
-        self.y_data.append(self.stream())
-        y = list(self.y_data)
+
         x = np.linspace(-self.time, 0, self.maxlen)
 
-        self.line.set_xdata(np.linspace(-self.time, 0, self.maxlen))
-        self.line.set_ydata(y)
+        self.line.set_xdata(x)
+
+        self.line.set_ydata(self.stream(self.maxlen))
 
         self.ax.draw_artist(self.ax.patch)
         self.ax.draw_artist(self.line)
@@ -80,17 +79,48 @@ class Plot:
         self.canvas.blit(self.ax.bbox)
 
     @classmethod
-    def start_plots(cls):
-        cls.stop = False
-        # cls.read = threading.Thread(target=cls.read_data)
-        # cls.read.start()
-        # cls.update_all_plots()
-
-    @classmethod
-    def stop_plots(cls):
-        for plot in cls.plots:
-            cls.stop = True
-
-    @classmethod
     def set_bracelet(cls, new_bracelet):
         cls.bracelet = new_bracelet
+
+
+class PlotFft:
+
+    def __init__(self, master, stream, title="chart", time=10, maxlen=1000):
+        # Создаем фигуру и оси
+        self.fig, self.ax = plt.subplots(figsize=PLOT_FIGSIZE)
+        self.ax.set_xlim([0, 120])
+
+        self.stream = stream
+        self.ax.set_title(title)
+
+        self.line, = self.ax.plot([], [], lw=0.5)
+
+        self.maxlen = maxlen
+
+
+        # Создаем холст для отображения графика
+        self.canvas = FigureCanvasTkAgg(self.fig, master=master)
+
+        # Запускаем генерацию данных и обновление графика
+        self.stop = False
+        self.time = time
+
+    def set_pos(self, row=0, column=0, min_y=-10000, max_y=10000):
+        self.ax.set_ylim([min_y, max_y])
+        self.canvas.draw()
+        self.canvas.get_tk_widget().grid(column=column, row=row, padx=10, pady=10)
+
+    def update_plot(self):
+
+        x = np.fft.fftfreq(len(self.stream()), 0.004)
+
+        self.line.set_xdata(x)
+
+        self.line.set_ydata(list(map(abs, self.stream())))
+
+        self.ax.draw_artist(self.ax.patch)
+        self.ax.draw_artist(self.line)
+
+        self.canvas.blit(self.ax.bbox)
+
+

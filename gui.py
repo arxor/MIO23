@@ -1,10 +1,13 @@
 import tkinter as tk
 from tkinter import StringVar
 
+import numpy.fft
+
 import processing
-from plot import Plot
+from plot import *
 from config import *
 from processing import *
+
 
 class Application(tk.Tk):
     def __init__(self, bracelet):
@@ -40,7 +43,7 @@ class Application(tk.Tk):
 
         # Создание кнопки для подключения к устройству
         connect_button = tk.Button(frame, text=BUTTON_CONNECT,
-                                command=self.connect)
+                                   command=self.connect)
 
         # Создание выпадающего меню выбора ком-порта
         com_ports = self.bracelet.get_ports()
@@ -66,7 +69,10 @@ class Application(tk.Tk):
         self.gx = Plot(self, bracelet.get_gx, PLOTTITLE_7, maxlen=50, time=1)
         self.gy = Plot(self, bracelet.get_gy, PLOTTITLE_8, maxlen=50, time=1)
         self.gz = Plot(self, bracelet.get_gz, PLOTTITLE_9, maxlen=50, time=1)
-        self.proceed_avg = Plot(self, processing.get_abp1_average, "middle 1", maxlen=50, time=1)
+        self.abp1_fft = PlotFft(self, stream=processing.abp1_get_fft, title="fft")
+        self.abp2_fft = PlotFft(self, stream=processing.abp2_get_fft, title="fft")
+        # self.proceed_avg = Plot(self, processing.get_abp1_average, "middle 1", maxlen=50,
+        #                         time=1)
 
         # Настройка положения виджетов в окне
         option_menu.grid(row=1, column=1)
@@ -81,7 +87,8 @@ class Application(tk.Tk):
         self.gx.set_pos(row=4, column=1, min_y=-16384, max_y=16383)
         self.gy.set_pos(row=4, column=2, min_y=-16384, max_y=16383)
         self.gz.set_pos(row=4, column=3, min_y=-16384, max_y=16383)
-        self.proceed_avg.set_pos(row=5, column=1)
+        self.abp1_fft.set_pos(row=5, column=1)
+        self.abp2_fft.set_pos(row=5, column=2)
         self.abp1.set_style(bg_color='white', line_color='orange', text_color='grey', font_family='fantasy')
         self.abp2.set_style()
 
@@ -113,5 +120,7 @@ class Application(tk.Tk):
         self.gx.update_plot()
         self.gy.update_plot()
         self.gz.update_plot()
-        self.proceed_avg.update_plot()
+        self.abp1_fft.update_plot()
+        self.abp2_fft.update_plot()
+        # self.proceed_avg.update_plot()
         self.after(15, self.interrupt)
