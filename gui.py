@@ -1,12 +1,7 @@
-import tkinter as tk
-from tkinter import StringVar
-
-import numpy.fft
-
 import processing
 from plot import *
 from config import *
-from processing import *
+from recognition import Jesture
 
 
 class Application(tk.Tk):
@@ -57,6 +52,11 @@ class Application(tk.Tk):
         else:
             option_menu = tk.OptionMenu(frame, selected_com_port, *com_ports,
                                         command=lambda a: self.change_port(selected_com_port))
+        # Создание кнопок записи жестов
+        start_recording_button = tk.Button(frame, text="Начать запись", command=self.bracelet.start_recording)
+        stop_recording_button = tk.Button(frame, text="Окончить запись", command=self.bracelet.stop_recording)
+
+        rec_button = tk.Button(frame, text="Распознать", command=self.rec)
 
         # Создание графиков
 
@@ -78,6 +78,11 @@ class Application(tk.Tk):
         option_menu.grid(row=1, column=1)
         connect_button.grid(row=1, column=2)
 
+        start_recording_button.grid(row=1, column=3)
+        stop_recording_button.grid(row=1, column=4)
+
+        rec_button.grid(row=1, column=5)
+
         self.abp1.set_pos(row=2, column=1)
         self.abp2.set_pos(row=2, column=2)
         self.ref.set_pos(row=2, column=3, min_y=300, max_y=700)
@@ -97,7 +102,6 @@ class Application(tk.Tk):
         if self.bracelet.serial.is_open:
             self.bracelet.start_reading()
             self.interrupt()
-            # Plot.start_plots()
         else:
             print(MESSAGE_CANT_CONNECT)
 
@@ -107,7 +111,7 @@ class Application(tk.Tk):
     def on_closing(self):
         # Действия при закрытии окна
         print(MESSAGE_CLOSE_WINDOW)
-        Plot.stop_plots()
+        self.bracelet.disconnect()
         self.destroy()  # закрыть окно
 
     def interrupt(self):
@@ -124,3 +128,6 @@ class Application(tk.Tk):
         self.abp2_fft.update_plot()
         # self.proceed_avg.update_plot()
         self.after(15, self.interrupt)
+    def rec(self):
+        Jesture.recognize(Jesture)
+        self.after(20, self.rec)

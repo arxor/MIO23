@@ -32,7 +32,6 @@ class Plot:
 
         self.maxlen = maxlen
 
-
         # Создаем холст для отображения графика
         self.canvas = FigureCanvasTkAgg(self.fig, master=master)
 
@@ -97,7 +96,6 @@ class PlotFft:
 
         self.maxlen = maxlen
 
-
         # Создаем холст для отображения графика
         self.canvas = FigureCanvasTkAgg(self.fig, master=master)
 
@@ -111,7 +109,6 @@ class PlotFft:
         self.canvas.get_tk_widget().grid(column=column, row=row, padx=10, pady=10)
 
     def update_plot(self):
-
         x = np.fft.fftfreq(len(self.stream()), 0.004)
 
         self.line.set_xdata(x)
@@ -122,5 +119,3 @@ class PlotFft:
         self.ax.draw_artist(self.line)
 
         self.canvas.blit(self.ax.bbox)
-
-
