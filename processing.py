@@ -1,5 +1,8 @@
 import numpy as np
+from scipy.signal import hilbert
+from config import *
 from collections import deque
+
 window_size = 10
 abp1_average = None
 abp1_fft = None
@@ -9,48 +12,43 @@ vals = np.zeros(window_size)
 
 
 def process(bracelet):
-    global abp1_average, idx, vals, abp1_fft, abp2_fft
-    abp1_fft = np.fft.fft(bracelet.get_abp1(50))
-    abp2_fft = np.fft.fft(bracelet.get_abp2(50))
+    bracelet.data[9] = np.abs(np.fft.fft(np.array(list(bracelet.get_data(0, bracelet.gesture_counter)))))
+    bracelet.data[10] = np.abs(np.fft.fft(np.array(list(bracelet.get_data(1, bracelet.gesture_counter)))))
 
-
-#     vals[idx] = bracelet.get_abp1()
-#     idx += 1
-#     if idx >= window_size:
-#         idx = 0
-#     abp1_average = np.mean(vals)
-#
-#
-# def get_abp1_average():
-#     return abp1_average
-# def envelope_detector(new_value, buffer_size=10):
-#     if not hasattr(envelope_detector, "buffer"):
-#         envelope_detector.buffer = [0] * buffer_size
-#
-#     envelope_detector.buffer.pop(0)
-#     envelope_detector.buffer.append(abs(new_value))
-#     return sum(envelope_detector.buffer) / len(envelope_detector.buffer)
 class EnvelopeDetector:
-    def __init__(self, buffer_size=5, decay_factor=0.9):
+    def __init__(self, buffer_size=10):
+        self.buffer = []
         self.buffer_size = buffer_size
-        self.decay_factor = decay_factor
-        self.buffer = [0] * buffer_size
-        self.peak = 0
 
-    def process(self, new_value):
-        # Обновляем пик, если новое значение выше текущего пика
-        if abs(new_value) > self.peak:
-            self.peak = abs(new_value)
+    def process(self, value):
+        # Добавляем новое значение в буфер
+        self.buffer.append(value)
 
-        # Обновляем буфер
-        self.buffer.pop(0)
-        self.buffer.append(self.peak)
+        # Если буфер превысил максимальный размер, удаляем самое старое значение
+        if len(self.buffer) > self.buffer_size:
+            self.buffer = self.buffer[1:]
 
-        # Постепенно уменьшаем значение пика
-        self.peak *= self.decay_factor
+        # Применяем фильтр Хилберта к буферу
+        analytic_signal = hilbert(self.buffer)
 
-        # Возвращаем среднее значение буфера в качестве огибающей
-        return sum(self.buffer) / len(self.buffer)
+        # Вычисляем огибающую как амплитуду аналитического сигнала
+        envelope = np.abs(analytic_signal)
+
+        # Возвращаем последнее значение огибающей
+        return envelope[-1]
+
+
+class MovingAverage:
+    def __init__(self, window_size):
+        self.window_size = window_size
+        self.values = []
+
+    def process(self, value):
+        self.values.append(value)
+        if len(self.values) > self.window_size:
+            self.values = self.values[-self.window_size:]
+        return sum(self.values) / len(self.values)
+
 
 class Accelerometer:
     def __init__(self):
@@ -68,19 +66,8 @@ class Accelerometer:
             return diff
 
 
-class StreamingNormalization:
-    def __init__(self, window_size):
-        self.window = deque(maxlen=window_size)
-
-    def normalize(self, value):
-        self.window.append(value)
-        mean = np.mean(self.window)
-        std = np.std(self.window)
-        return (value - mean) / std if std != 0 else value
-
-def abp1_get_fft():
-    return abp1_fft
-
-
-def abp2_get_fft():
-    return abp2_fft
+def normalize(value, from_min, from_max, to_min=-1, to_max=1):
+    from_range = from_max - from_min
+    to_range = to_max - to_min
+    scaled_value = (value - from_min) / from_range
+    return to_min + (scaled_value * to_range)

@@ -2,6 +2,8 @@ import processing
 from plot import *
 from config import *
 from recognition import Jesture
+import tkinter as tk
+from tkinter import StringVar
 
 
 class Application(tk.Tk):
@@ -10,9 +12,6 @@ class Application(tk.Tk):
 
         # Создание экземпляра класса Bracelet
         self.bracelet = bracelet
-
-        # Передача устройства в класс Plot
-        Plot.set_bracelet(self.bracelet)
 
         # Название главного окна
         self.title(WINDOW_TITLE)
@@ -58,44 +57,28 @@ class Application(tk.Tk):
 
         rec_button = tk.Button(frame, text="Распознать", command=self.rec)
 
-        # Создание графиков
+        self.plots = []
 
-        self.abp1 = Plot(self, bracelet.get_abp1, PLOTTITLE_1, maxlen=50, time=1)
-        self.abp2 = Plot(self, bracelet.get_abp2, PLOTTITLE_2, maxlen=50, time=1)
-        self.ref = Plot(self, bracelet.get_ref, PLOTTITLE_3, maxlen=500, time=10)
-        self.ax = Plot(self, bracelet.get_ax, PLOTTITLE_4, maxlen=50, time=1)
-        self.ay = Plot(self, bracelet.get_ay, PLOTTITLE_5, maxlen=50, time=1)
-        self.az = Plot(self, bracelet.get_az, PLOTTITLE_6, maxlen=50, time=1)
-        self.gx = Plot(self, bracelet.get_gx, PLOTTITLE_7, maxlen=50, time=1)
-        self.gy = Plot(self, bracelet.get_gy, PLOTTITLE_8, maxlen=50, time=1)
-        self.gz = Plot(self, bracelet.get_gz, PLOTTITLE_9, maxlen=50, time=1)
-        self.abp1_fft = PlotFft(self, stream=processing.abp1_get_fft, title="fft")
-        self.abp2_fft = PlotFft(self, stream=processing.abp2_get_fft, title="fft")
-        # self.proceed_avg = Plot(self, processing.get_abp1_average, "middle 1", maxlen=50,
-        #                         time=1)
+        # Создание графиков
+        for i in range(NUM_SIGNALS):
+            if i <= 8:
+                self.plots.append(Plot(self, bracelet.get_data, i, CHANNELS[i]))
+                self.plots[i].set_pos(row=i // 3 + 2, column=i % 3)
+
+            else:
+                self.plots.append(Plot(self, bracelet.get_data, i, CHANNELS[i], fft=True))
+                self.plots[i].set_pos(row=i // 3 + 2, column=i % 3, min_y=0, max_y=50, a=0, b=150)
+
+
 
         # Настройка положения виджетов в окне
-        option_menu.grid(row=1, column=1)
-        connect_button.grid(row=1, column=2)
+        option_menu.grid(row=0, column=0)
+        connect_button.grid(row=0, column=1)
 
-        start_recording_button.grid(row=1, column=3)
-        stop_recording_button.grid(row=1, column=4)
+        start_recording_button.grid(row=0, column=2)
+        stop_recording_button.grid(row=0, column=3)
 
-        rec_button.grid(row=1, column=5)
-
-        self.abp1.set_pos(row=2, column=1)
-        self.abp2.set_pos(row=2, column=2)
-        self.ref.set_pos(row=2, column=3, min_y=300, max_y=700)
-        self.ax.set_pos(row=3, column=1, min_y=-16384, max_y=16383)
-        self.ay.set_pos(row=3, column=2, min_y=-16384, max_y=16383)
-        self.az.set_pos(row=3, column=3, min_y=-16384, max_y=16383)
-        self.gx.set_pos(row=4, column=1, min_y=-16384, max_y=16383)
-        self.gy.set_pos(row=4, column=2, min_y=-16384, max_y=16383)
-        self.gz.set_pos(row=4, column=3, min_y=-16384, max_y=16383)
-        self.abp1_fft.set_pos(row=5, column=1)
-        self.abp2_fft.set_pos(row=5, column=2)
-        self.abp1.set_style(bg_color='white', line_color='orange', text_color='grey', font_family='fantasy')
-        self.abp2.set_style()
+        rec_button.grid(row=0, column=4)
 
     def connect(self):
         self.bracelet.connect()
@@ -115,17 +98,11 @@ class Application(tk.Tk):
         self.destroy()  # закрыть окно
 
     def interrupt(self):
-        self.abp1.update_plot()
-        self.abp2.update_plot()
-        self.ref.update_plot()
-        self.ax.update_plot()
-        self.ay.update_plot()
-        self.az.update_plot()
-        self.gx.update_plot()
-        self.gy.update_plot()
-        self.gz.update_plot()
-        self.abp1_fft.update_plot()
-        self.abp2_fft.update_plot()
+        for i in range(11):
+            if i <= 8:
+                self.plots[i].update_plot()
+            else:
+                self.plots[i].update_fft(self.bracelet.gesture_counter)
         # self.proceed_avg.update_plot()
         self.after(15, self.interrupt)
     def rec(self):

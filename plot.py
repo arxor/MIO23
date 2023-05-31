@@ -1,15 +1,5 @@
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from collections import deque
-import numpy as np
-import time
-import threading
-from processing import *
-from config import *
-
-import tkinter as tk
-from tkinter import StringVar
-from bracelet import Bracelet
 from config import *
 from processing import *
 
@@ -17,32 +7,31 @@ from processing import *
 class Plot:
     plots = []
 
-    def __init__(self, master, stream, title="chart", time=10, maxlen=500, update_interval=20, autoscale=0):
+    def __init__(self, master, stream, channel, title="chart", maxlen=50, fft=False):
         # Создаем фигуру и оси
         self.fig, self.ax = plt.subplots(figsize=PLOT_FIGSIZE)
-        self.ax.set_xlim([-time, 0])
         self.plots.append(self)
         self.stream = stream
         self.ax.set_title(title)
+
+        # ????
         for tick in self.ax.xaxis.get_major_ticks():
             tick.label.set_fontsize(PLOT_FONTSIZE)  # установка размера шрифта на 10 для меток на оси x
         for tick in self.ax.yaxis.get_major_ticks():
             tick.label.set_fontsize(PLOT_FONTSIZE)
         self.line, = self.ax.plot([], [], lw=0.5)
 
+        self.fft = fft
         self.maxlen = maxlen
+        self.channel = channel
 
         # Создаем холст для отображения графика
         self.canvas = FigureCanvasTkAgg(self.fig, master=master)
 
-        # Запускаем генерацию данных и обновление графика
-        self.update_interval = update_interval
-        self.stop = False
-        self.time = time
-        self.update_interval = update_interval
-        self.autoscale = autoscale
-
-    def set_pos(self, row=0, column=0, min_y=0, max_y=1023):
+    def set_pos(self, row=0, column=0, min_y=-1, max_y=1, a=-10, b=0):
+        self.a = a
+        self.b = b
+        self.ax.set_xlim([a, b])
         self.ax.set_ylim([min_y, max_y])
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(column=column, row=row, padx=10, pady=10)
@@ -65,21 +54,26 @@ class Plot:
         self.canvas.draw()  # перерисовываем график
 
     def update_plot(self):
-
-        x = np.linspace(-self.time, 0, self.maxlen)
+        x = np.linspace(self.a, self.b, self.maxlen)
 
         self.line.set_xdata(x)
-
-        self.line.set_ydata(self.stream(self.maxlen))
+        self.line.set_ydata(self.stream(self.channel, self.maxlen))
 
         self.ax.draw_artist(self.ax.patch)
         self.ax.draw_artist(self.line)
 
         self.canvas.blit(self.ax.bbox)
 
-    @classmethod
-    def set_bracelet(cls, new_bracelet):
-        cls.bracelet = new_bracelet
+    def update_fft(self, length):
+        x = np.fft.fftfreq(len(self.stream(self.channel, length)), 0.004)
+
+        self.line.set_xdata(x)
+        self.line.set_ydata(self.stream(self.channel, length))
+
+        self.ax.draw_artist(self.ax.patch)
+        self.ax.draw_artist(self.line)
+
+        self.canvas.blit(self.ax.bbox)
 
 
 class PlotFft:
@@ -87,6 +81,8 @@ class PlotFft:
     def __init__(self, master, stream, title="chart", time=10, maxlen=1000):
         # Создаем фигуру и оси
         self.fig, self.ax = plt.subplots(figsize=PLOT_FIGSIZE)
+
+        #######################
         self.ax.set_xlim([0, 120])
 
         self.stream = stream
