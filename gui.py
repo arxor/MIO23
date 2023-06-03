@@ -55,7 +55,7 @@ class Application(tk.Tk):
         start_recording_button = tk.Button(frame, text="Начать запись", command=self.bracelet.start_recording)
         stop_recording_button = tk.Button(frame, text="Окончить запись", command=self.bracelet.stop_recording)
 
-        rec_button = tk.Button(frame, text="Распознать", command=self.rec)
+        rec_button = tk.Button(frame, text="Распознать", command=self.prep)
 
         self.plots = []
 
@@ -105,6 +105,9 @@ class Application(tk.Tk):
                 self.plots[i].update_fft(self.bracelet.gesture_counter)
         # self.proceed_avg.update_plot()
         self.after(15, self.interrupt)
+    def prep(self):
+        Jesture.prepare_model()
+        self.rec()
     def rec(self):
-        Jesture.recognize(Jesture)
-        self.after(20, self.rec)
+        Jesture.recognize(self.bracelet.data)
+        self.after(100, self.rec)

@@ -22,12 +22,17 @@ class Bracelet:
         self.serial.port = None
         self.serial.timeout = COM_TIMEOUT
         self.gesture_rec_flag = False
+        self.gesture_counter = 0
 
         self.env1 = processing.EnvelopeDetector()
 
-        self.acc = processing.Accelerometer()
+        self.acc_x = processing.Accelerometer()
+        self.acc_y = processing.Accelerometer()
+        self.acc_z = processing.Accelerometer()
 
         self.ma1 = processing.MovingAverage(3)
+        self.ma2 = processing.MovingAverage(3)
+        self.ma3 = processing.MovingAverage(3)
 
     def connect(self):
         if not self.serial.is_open:
@@ -69,12 +74,24 @@ class Bracelet:
                 while len(all_data) > 0:
                     dta = all_data[:9]
                     all_data = all_data[9:]
-
+                    processing.process(self)
                     for i in range(9):
-                        self.data[i].append(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))
+                        if i == 3:
+                            self.data[i].append(self.acc_x.process(
+                                self.ma1.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))))
+                        elif i == 4:
+                            self.data[i].append(self.acc_y.process(
+                                self.ma2.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))))
+                        elif i == 5:
+                            self.data[i].append(self.acc_z.process(
+                                self.ma3.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))))
+                        else:
+
+                            self.data[i].append(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))
+
                     if self.gesture_rec_flag:
                         self.gesture_counter += 1
-                        if self.gesture_counter == 300:
+                        if self.gesture_counter == 100:
                             self.gesture_rec_flag = False
                             self.stop_recording()
 
@@ -91,13 +108,14 @@ class Bracelet:
         self.gesture_rec_flag = True
 
     def stop_recording(self):
-        processing.process(self)
         self.gesture_rec_flag = False
         if len(Jesture.items) == 0:
             print("Нет жестов")
         else:
             Jesture.items[-1].data = [list(queue)[-self.gesture_counter:] for queue in self.data]
+
             Jesture.items[-1].save_to_file()
+
             print(Jesture.items[-1].data)
         self.gesture_counter = 0
 

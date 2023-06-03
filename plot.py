@@ -13,6 +13,9 @@ class Plot:
         self.plots.append(self)
         self.stream = stream
         self.ax.set_title(title)
+        self.ax.grid(True, linestyle='--', linewidth=0.5, color='gray')
+        # Увеличение числа горизонтальных линий сетки до 10
+
 
         # ????
         for tick in self.ax.xaxis.get_major_ticks():
@@ -33,6 +36,7 @@ class Plot:
         self.b = b
         self.ax.set_xlim([a, b])
         self.ax.set_ylim([min_y, max_y])
+        self.ax.yaxis.set_ticks(np.linspace(self.ax.get_ylim()[0], self.ax.get_ylim()[1], 11))
         self.canvas.draw()
         self.canvas.get_tk_widget().grid(column=column, row=row, padx=10, pady=10)
 
@@ -76,42 +80,3 @@ class Plot:
         self.canvas.blit(self.ax.bbox)
 
 
-class PlotFft:
-
-    def __init__(self, master, stream, title="chart", time=10, maxlen=1000):
-        # Создаем фигуру и оси
-        self.fig, self.ax = plt.subplots(figsize=PLOT_FIGSIZE)
-
-        #######################
-        self.ax.set_xlim([0, 120])
-
-        self.stream = stream
-        self.ax.set_title(title)
-
-        self.line, = self.ax.plot([], [], lw=0.5)
-
-        self.maxlen = maxlen
-
-        # Создаем холст для отображения графика
-        self.canvas = FigureCanvasTkAgg(self.fig, master=master)
-
-        # Запускаем генерацию данных и обновление графика
-        self.stop = False
-        self.time = time
-
-    def set_pos(self, row=0, column=0, min_y=-10000, max_y=10000):
-        self.ax.set_ylim([min_y, max_y])
-        self.canvas.draw()
-        self.canvas.get_tk_widget().grid(column=column, row=row, padx=10, pady=10)
-
-    def update_plot(self):
-        x = np.fft.fftfreq(len(self.stream()), 0.004)
-
-        self.line.set_xdata(x)
-
-        self.line.set_ydata(list(map(abs, self.stream())))
-
-        self.ax.draw_artist(self.ax.patch)
-        self.ax.draw_artist(self.line)
-
-        self.canvas.blit(self.ax.bbox)

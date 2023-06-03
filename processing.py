@@ -12,8 +12,8 @@ vals = np.zeros(window_size)
 
 
 def process(bracelet):
-    bracelet.data[9] = np.abs(np.fft.fft(np.array(list(bracelet.get_data(0, bracelet.gesture_counter)))))
-    bracelet.data[10] = np.abs(np.fft.fft(np.array(list(bracelet.get_data(1, bracelet.gesture_counter)))))
+    bracelet.data[9] = np.abs(np.fft.fft(np.array(list(bracelet.get_data(0, 100)))))
+    bracelet.data[10] = np.abs(np.fft.fft(np.array(list(bracelet.get_data(1, 100)))))
 
 class EnvelopeDetector:
     def __init__(self, buffer_size=10):
@@ -71,3 +71,24 @@ def normalize(value, from_min, from_max, to_min=-1, to_max=1):
     to_range = to_max - to_min
     scaled_value = (value - from_min) / from_range
     return to_min + (scaled_value * to_range)
+
+def trim_rest_periods(signal, rest_threshold, transition_samples):
+    start_index = 0
+    end_index = len(signal) - 1
+
+    # Найдите начало активности
+    for i in range(len(signal)):
+        if abs(signal[i]) > rest_threshold:
+            start_index = max(0, i - transition_samples)
+            break
+
+    # Найдите конец активности
+    for i in range(len(signal) - 1, -1, -1):
+        if abs(signal[i]) > rest_threshold:
+            end_index = min(len(signal) - 1, i + transition_samples)
+            break
+
+    # Обрежьте сигнал, чтобы удалить периоды покоя в начале и конце
+    trimmed_signal = signal[start_index:end_index + 1]
+
+    return trimmed_signal
