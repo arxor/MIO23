@@ -34,10 +34,12 @@ class Bracelet:
 
     def connect(self):
         if not self.serial.is_open:
+            print("Подключение...")
             try:
                 self.serial.open()
+                print("Подключено успешно!")
             except serial.SerialException:
-                pass
+                print("Не удалось подключиться к браслету!")
 
     def disconnect(self):
         if self.serial.is_open:
@@ -54,7 +56,7 @@ class Bracelet:
                 ports.remove(port)
             else:
                 ports[ports.index(port)] = port.name
-        print(ports)
+        print("Обнаружены порты: ", ports)
         return ports
 
     def read_data(self):
@@ -101,20 +103,13 @@ class Bracelet:
         thr1 = threading.Thread(target=self.read_data)
         thr1.start()
 
-    def start_recording(self, name):
-        j = Jesture(name)
+    def start_recording(self):
         self.gesture_rec_flag = True
 
     def stop_recording(self):
         self.gesture_rec_flag = False
-        if len(Jesture.gestures) == 0:
-            print("Нет жестов")
-        else:
-            Jesture.gestures[-1].data = [list(queue)[-self.gesture_counter:] for queue in self.data]
-
-            Jesture.gestures[-1].save_to_file()
-
-            print(Jesture.gestures[-1].data)
+        Jesture.selected_gesture.gesture["data"] = [list(queue)[-self.gesture_counter:] for queue in self.data]
+        print(Jesture.selected_gesture.gesture["data"])
         self.gesture_counter = 0
 
     @classmethod

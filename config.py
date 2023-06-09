@@ -1,3 +1,6 @@
+from tkinter import ttk
+import tkinter as tk
+
 #
 # COM SETTINGS
 #
@@ -13,17 +16,22 @@ BUFFERS_LEN = [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 50, 50]
 NORMALIZE_MIN = [0, 0, 0, -16384, -16384, -16384, -16384, -16384, -16384]
 NORMALIZE_MAX = [1023, 1023, 1023, 16383, 16383, 16383, 16383, 16383, 16383]
 # OPTINON MENUS
-OPTIONMENU_COM_CHOOSE = "Выберите порт"
 OPTIONMENU_NO_COM = "Нет доступных портов"
 
-# BUTTONS
-BUTTON_CONNECT = "Подключиться"
 
 # WINDOW TITLE
 WINDOW_TITLE = "Электромиографический браслет"
 
 # WINDOW SIZE = screen_size / WINDOWSIZE_DIVIDER
 WINDOWSIZE_DIVIDER = 1.2
+
+#COLORS
+DARK_GREY = "#1e1e1e"
+LIGHT_GREY = "#333333"
+ACCENT_COLOR = "#2196f3"
+
+# Настройка стиля для OptionMenu
+
 
 #
 # PLOT SETTINGS
@@ -47,8 +55,4 @@ PLOT_AUTOSCALE = 50
 PLOT_FONTSIZE = 7
 
 # PLOT SIZE
-PLOT_FIGSIZE = tuple(map(lambda x: x / 1.3, (3, 1.8)))
-
-# MESSAGES (to console)
-MESSAGE_CANT_CONNECT = "Не удалось подключиться к последовательному порту."
-MESSAGE_CLOSE_WINDOW = "Закрытие окна"
+PLOT_FIGSIZE = tuple(map(lambda x: x / 1.3, (3.5, 2)))

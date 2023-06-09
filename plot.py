@@ -16,7 +16,6 @@ class Plot:
         self.ax.grid(True, linestyle='--', linewidth=0.5, color='gray')
         # Увеличение числа горизонтальных линий сетки до 10
 
-
         # ????
         for tick in self.ax.xaxis.get_major_ticks():
             tick.label.set_fontsize(PLOT_FONTSIZE)  # установка размера шрифта на 10 для меток на оси x
@@ -30,26 +29,28 @@ class Plot:
 
         # Создаем холст для отображения графика
         self.canvas = FigureCanvasTkAgg(self.fig, master=master)
+        self.set_style()
 
     def set_pos(self, row=0, column=0, min_y=-1, max_y=1, a=-10, b=0):
         self.a = a
         self.b = b
         self.ax.set_xlim([a, b])
         self.ax.set_ylim([min_y, max_y])
-        self.ax.yaxis.set_ticks(np.linspace(self.ax.get_ylim()[0], self.ax.get_ylim()[1], 11))
-        self.canvas.draw()
-        self.canvas.get_tk_widget().grid(column=column, row=row, padx=10, pady=10)
 
-    def set_style(self, bg_color='white', line_color='blue', text_color='black', font_size=10, font_family='serif'):
-        self.ax.set_facecolor(bg_color)  # установка цвета фона
+        self.canvas.draw()
+        self.canvas.get_tk_widget().grid(column=column, row=row, padx=2, pady=2)
+
+    def set_style(self, face_color=LIGHT_GREY, bg_color=DARK_GREY, line_color=ACCENT_COLOR, text_color=ACCENT_COLOR, font_size=6, title_font_size=8,
+                  font_family='serif'):
+        self.ax.set_facecolor(face_color)  # установка цвета фона
         self.line.set_color(line_color)  # установка цвета линии
-        self.fig.set_facecolor('lightblue')
+        self.fig.set_facecolor(bg_color)
         self.ax.title.set_color(text_color)  # установка цвета заголовка
         self.ax.xaxis.label.set_color(text_color)  # установка цвета меток на оси x
         self.ax.yaxis.label.set_color(text_color)  # установка цвета меток на оси y
         self.ax.tick_params(axis='both', colors=text_color,
                             labelsize=font_size)  # установка цвета и размера меток на осях
-        self.ax.title.set_fontsize(font_size)  # установка размера шрифта заголовка
+        self.ax.title.set_fontsize(title_font_size)  # установка размера шрифта заголовка
         self.ax.xaxis.label.set_fontsize(font_size)  # установка размера шрифта меток на оси x
         self.ax.yaxis.label.set_fontsize(font_size)  # установка размера шрифта меток на оси y
         self.ax.title.set_fontfamily(font_family)  # установка семейства шрифта заголовка
@@ -78,5 +79,3 @@ class Plot:
         self.ax.draw_artist(self.line)
 
         self.canvas.blit(self.ax.bbox)
-
-

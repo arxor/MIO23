@@ -12,8 +12,8 @@ vals = np.zeros(window_size)
 
 
 def process(bracelet):
-    bracelet.data[9] = np.abs(np.fft.fft(np.array(list(bracelet.get_data(0, 100)))))
-    bracelet.data[10] = np.abs(np.fft.fft(np.array(list(bracelet.get_data(1, 100)))))
+    bracelet.data[9] = np.round(np.abs(np.fft.fft(np.array(list(bracelet.get_data(0, 100))))), 3)
+    bracelet.data[10] = np.round(np.abs(np.fft.fft(np.array(list(bracelet.get_data(1, 100))))), 3)
 
 class MovingAverage:
     def __init__(self, window_size):
