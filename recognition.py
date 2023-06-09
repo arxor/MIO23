@@ -1,69 +1,76 @@
 import json
 import numpy as np
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, LSTM, TimeDistributed, Conv1D
+from tensorflow.keras.layers import Dense, Dropout, LSTM, TimeDistributed, Conv1D, Bidirectional
 from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 
 
 class Jesture:
-    items = []
+    gestures = []
+    prob = []
 
-    def __init__(self):
-        self.items.append(self)
-        self.name = "кулак"
+    def __init__(self, name):
+        self.gestures.append(self)
+        self.name = name
         self.data = None
+        self.index = None
         self.label = []
+        self.gesture = {"name": self.name, "index": self.index, "data": self.data, "label": self.label}
 
-    def save_to_file(self):
+    @classmethod
+    def load_gestures(cls):
+        try:
+            with open("gestures.json", "r") as f:
+                cls.gestures = json.load(f)
+        except json.decoder.JSONDecodeError:
+            print("No gestures found.")
+            return
+
+    @classmethod
+    def delete_recording(cls, gesture_name, index):
         try:
             with open("gestures.json", "r") as f:
                 gestures = json.load(f)
         except json.decoder.JSONDecodeError:
-            gestures = []
+            print("No gestures found.")
+            return
 
-        for gesture in gestures:
-            if gesture['name'] == self.name:
-                index = gesture['index']
+        # Ищем жест с заданным именем и удаляем его
+        for i, gesture in enumerate(gestures):
+            if gesture['name'] == gesture_name:
+                del gesture['data'][index]
+                del gesture['label'][index]
                 break
         else:
-            index = len(gestures) + 1
-
-        self.label_gesture(index, 1, 10)
-
-        for gesture in gestures:
-            if gesture['name'] == self.name:
-                gesture['data'].append(self.data)
-                gesture['label'].append(self.label)
-                break
-        else:
-            save = {"name": self.name, "index": index, "data": [self.data], "label": [self.label]}
-            gestures.append(save)
+            print("Gesture not found.")
+            return
 
         with open("gestures.json", "w") as f:
             json.dump(gestures, f, indent=4)
 
-    def label_gesture(self, gesture_index, rest_threshold_ratio, transition_samples, min_threshold=0.1):
-        for signal in self.data:
-            labeled_signal = [0] * len(signal)
+    def delete_gesture(self):
+        try:
+            Jesture.gestures.remove(self)
+        except ValueError:
+            print(f"Gesture {self.name} not found in the list.")
 
-            # Рассчитаем среднее значение и стандартное отклонение сигнала
-            mean_signal = np.mean(signal)
-            std_signal = np.std(signal)
+    @classmethod
+    def reindex_gestures(cls):
+        for i, gesture in enumerate(cls.gestures):
+            gesture['index'] = i + 1
+    @classmethod
+    def save_to_file(cls):
+        cls.reindex_gestures()
+        with open("gestures.json", "w") as f:
+            json.dump(cls.gestures, f, indent=4)
 
-            # Установим адаптивный порог как множитель стандартного отклонения выше среднего
-            threshold = mean_signal + rest_threshold_ratio * std_signal
-
-            # Установим минимальный порог
-            if threshold < min_threshold:
-                threshold = min_threshold
-
-            # Пометьте сигнал, где он превышает порог
-            for i in range(transition_samples, len(signal) - transition_samples):
-                if any(abs(val) > threshold for val in signal[i - transition_samples:i + transition_samples + 1]):
-                    labeled_signal[i] = gesture_index
-
-            self.label.append(labeled_signal)
+    @classmethod
+    def check_name(cls, name):
+        for gesture in cls.gestures:
+            if gesture['name'] == name:
+                return 1
+        return 0
 
     @classmethod
     def sum_arrays(cls, arr):
@@ -92,28 +99,44 @@ class Jesture:
 
     @classmethod
     def process_gestures(cls, filename):
-        with open(filename, 'r') as f:
-            data = json.load(f)
-
-        X = cls.convert_data(data)
-        y = cls.convert_labels(data)
+        X = cls.convert_data(cls.gestures)
+        y = cls.convert_labels(cls.gestures)
         return X, y
 
+    # @classmethod
+    # def create_model(cls, input_shape, num_classes):
+    #     model = Sequential()
+    #
+    #     model.add(Conv1D(64, kernel_size=3, activation='relu', padding='same', input_shape=input_shape))
+    #     model.add(Dropout(0.2))
+    #
+    #     model.add(LSTM(128, return_sequences=True))
+    #     model.add(Dropout(0.2))
+    #
+    #     model.add(LSTM(128, return_sequences=True))
+    #     model.add(Dropout(0.2))
+    #
+    #     model.add(TimeDistributed(Dense(32, activation='relu')))
+    #     model.add(Dropout(0.2))
+    #
+    #     model.add(TimeDistributed(Dense(num_classes, activation='softmax')))
+    #
+    #     return model
     @classmethod
     def create_model(cls, input_shape, num_classes):
         model = Sequential()
 
-        model.add(Conv1D(64, kernel_size=3, activation='relu', padding='same', input_shape=input_shape))
-        model.add(Dropout(0.2))
+        model.add(Conv1D(128, kernel_size=3, activation='relu', padding='same', input_shape=input_shape))
+        model.add(Dropout(0.3))
 
-        model.add(LSTM(128, return_sequences=True))
-        model.add(Dropout(0.2))
+        model.add(Bidirectional(LSTM(256, return_sequences=True)))
+        model.add(Dropout(0.3))
 
-        model.add(LSTM(128, return_sequences=True))
-        model.add(Dropout(0.2))
+        model.add(Bidirectional(LSTM(256, return_sequences=True)))
+        model.add(Dropout(0.3))
 
-        model.add(TimeDistributed(Dense(32, activation='relu')))
-        model.add(Dropout(0.2))
+        model.add(TimeDistributed(Dense(64, activation='relu')))
+        model.add(Dropout(0.3))
 
         model.add(TimeDistributed(Dense(num_classes, activation='softmax')))
 
@@ -139,4 +162,6 @@ class Jesture:
     @classmethod
     def recognize(cls, d):
         data = np.array([np.transpose([list(queue)[-100:] for queue in d])])
-        print(np.around(cls.model.predict(data), decimals=2))
+        a = np.around(cls.model.predict(data), decimals=2)
+        cls.prob = a[0][99].tolist()
+        print(a[0][99])

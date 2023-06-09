@@ -24,8 +24,6 @@ class Bracelet:
         self.gesture_rec_flag = False
         self.gesture_counter = 0
 
-        self.env1 = processing.EnvelopeDetector()
-
         self.acc_x = processing.Accelerometer()
         self.acc_y = processing.Accelerometer()
         self.acc_z = processing.Accelerometer()
@@ -77,17 +75,17 @@ class Bracelet:
                     processing.process(self)
                     for i in range(9):
                         if i == 3:
-                            self.data[i].append(self.acc_x.process(
-                                self.ma1.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))))
+                            self.data[i].append(round(self.acc_x.process(
+                                self.ma1.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))), 3))
                         elif i == 4:
-                            self.data[i].append(self.acc_y.process(
-                                self.ma2.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))))
+                            self.data[i].append(round(self.acc_y.process(
+                                self.ma2.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))), 3))
                         elif i == 5:
-                            self.data[i].append(self.acc_z.process(
-                                self.ma3.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))))
+                            self.data[i].append(round(self.acc_z.process(
+                                self.ma3.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))), 3))
                         else:
 
-                            self.data[i].append(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))
+                            self.data[i].append(round(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]), 3))
 
                     if self.gesture_rec_flag:
                         self.gesture_counter += 1
@@ -103,20 +101,20 @@ class Bracelet:
         thr1 = threading.Thread(target=self.read_data)
         thr1.start()
 
-    def start_recording(self):
-        j = Jesture()
+    def start_recording(self, name):
+        j = Jesture(name)
         self.gesture_rec_flag = True
 
     def stop_recording(self):
         self.gesture_rec_flag = False
-        if len(Jesture.items) == 0:
+        if len(Jesture.gestures) == 0:
             print("Нет жестов")
         else:
-            Jesture.items[-1].data = [list(queue)[-self.gesture_counter:] for queue in self.data]
+            Jesture.gestures[-1].data = [list(queue)[-self.gesture_counter:] for queue in self.data]
 
-            Jesture.items[-1].save_to_file()
+            Jesture.gestures[-1].save_to_file()
 
-            print(Jesture.items[-1].data)
+            print(Jesture.gestures[-1].data)
         self.gesture_counter = 0
 
     @classmethod
