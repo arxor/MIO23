@@ -14,6 +14,8 @@ class Application(tk.Tk):
 
         self.bracelet = bracelet
 
+        self.continue_recognize = True
+
         self.set_initial_configuration()
         self.set_style()
 
@@ -59,16 +61,32 @@ class Application(tk.Tk):
     def create_control_elements(self, control_frame):
         ttk.Button(self.control_frame, text="Подключиться", command=self.connect, style='Custom.TButton').grid(row=0,
                                                                                                                column=1)
-        ttk.Button(self.control_frame, text="Начать запись", command=lambda: self.bracelet.start_recording(),
+        ttk.Button(self.control_frame, text="Отключиться", command=self.bracelet.disconnect,
                    style='Custom.TButton').grid(row=0, column=2, sticky="nsew")
-        ttk.Button(self.control_frame, text="Окончить запись", command=self.bracelet.stop_recording,
+        ttk.Button(self.control_frame, text="Начать запись", command=lambda: self.bracelet.start_recording(),
                    style='Custom.TButton').grid(row=0, column=3, sticky="nsew")
         ttk.Button(self.control_frame, text="Обучить модель", command=self.prep, style='Custom.TButton').grid(row=0,
-                                                                                                          column=4, sticky="nsew")
+                                                                                                              column=4,
+                                                                                                              sticky="nsew")
+        ttk.Button(self.control_frame, text="Начать распозн.", command=self.rec, style='Custom.TButton').grid(
+            row=1, column=0, columnspan=1, sticky="nsew")
+        ttk.Button(self.control_frame, text="Остан. распозн.", command=self.stop_recognize,
+                   style='Custom.TButton').grid(
+            row=1, column=1, columnspan=1, sticky="nsew")
+        ttk.Button(self.control_frame, text="Загрузить модель", command=Jesture.load_model,
+                   style='Custom.TButton').grid(
+            row=1, column=2, columnspan=1, sticky="nsew")
+        ttk.Button(self.control_frame, text="Удалить модель", command=Jesture.delete_model,
+                   style='Custom.TButton').grid(
+            row=1, column=3, columnspan=1, sticky="nsew")
+        ttk.Button(self.control_frame, text="Обновить квадр.", command=self.create_squares,
+                   style='Custom.TButton').grid(
+            row=1, column=4, columnspan=1, sticky="nsew")
         ttk.Button(self.control_frame, text="Удалить жест", command=self.del_gesture, style='Custom.TButton').grid(
-            row=3, column=2, pady=10, sticky="nsew")
-        ttk.Button(self.control_frame, text="Создать", command=self.new_gesture, style='Custom.TButton').grid(row=4,
-                                                                                                              column=2, sticky="nsew")
+            row=4, column=2, pady=10, sticky="nsew")
+        ttk.Button(self.control_frame, text="Создать", command=self.new_gesture, style='Custom.TButton').grid(row=5,
+                                                                                                              column=2,
+                                                                                                              sticky="nsew")
 
         # Создание выпадающего списка com портов
         selected_com_port = StringVar()
@@ -80,15 +98,15 @@ class Application(tk.Tk):
 
         # Создание таблиц
         self.table1 = Table(self.control_frame, self.convert_gestures_data_for_table(),
-                            ['Номер жеста', 'Название жеста', 'Число записей'], row=1, column=1)
+                            ['Номер жеста', 'Название жеста', 'Число записей'], row=2, column=1)
         self.table2 = Table(self.control_frame, self.get_gesture_recordings_list(Jesture.selected_gesture),
-                            columns=["Номер записи", "Длина записи"], row=5, column=1)
+                            columns=["Номер записи", "Длина записи"], row=6, column=1)
 
         # Создание элементов управления для выбора и создания жестов
-        ttk.Label(self.control_frame, text="Выберите жест: ", style='Custom.TLabel').grid(row=3, column=0)
-        ttk.Label(self.control_frame, text="Новый жест:", style='Custom.TLabel').grid(row=4, column=0)
-        self.new_gesture_entry = ttk.Entry(self.control_frame, style='Custom.TEntry',width=12)
-        self.new_gesture_entry.grid(row=4, column=1)
+        ttk.Label(self.control_frame, text="Выберите жест: ", style='Custom.TLabel').grid(row=4, column=0)
+        ttk.Label(self.control_frame, text="Новый жест:", style='Custom.TLabel').grid(row=5, column=0)
+        self.new_gesture_entry = ttk.Entry(self.control_frame, style='Custom.TEntry', width=12)
+        self.new_gesture_entry.grid(row=5, column=1)
 
         self.selected_gesture = StringVar()
         self.selected_gesture.set("")
@@ -101,13 +119,12 @@ class Application(tk.Tk):
         self.opt_menu_gesture = ttk.Combobox(self.control_frame, state="readonly", textvariable=self.selected_gesture,
                                              values=self.gesture_names, style="Custom.TCombobox", width=10)
         self.update_option_menu()
-        self.opt_menu_gesture.grid(row=3, column=1)
+        self.opt_menu_gesture.grid(row=4, column=1)
 
         # Создание кругов вероятности
         self.circle_frame = ttk.Frame(self.control_frame, style='Custom.TFrame')
         self.circle_frame.grid(row=8, column=0, columnspan=4, rowspan=2, sticky="nsew", pady=30)
-        self.circles = [ProbabilityCircle(self.circle_frame, probability=0, name="NO")]
-        self.circles[0].grid(row=0, column=0)
+        self.circles = []
 
     def create_plot_elements(self, plot_frame):
         # графики, размещенные в plot_frame
@@ -201,17 +218,25 @@ class Application(tk.Tk):
 
     def prep(self):
         Jesture.prepare_model()
-        gestures = Jesture.get_gestures()
-        for i in range(0, len(gestures)):
-            self.circles.append(ProbabilityCircle(self.circle_frame, probability=0, name=gestures[i]['name']))
-            self.circles[i + 1].grid(row=(i + 1) // 4, column=(i + 1) % 4)
-        self.rec()
+        self.create_squares()
+
+    def create_squares(self):
+        for i in range(0, len(Jesture.gestures)):
+            self.circles.append(
+                ProbabilityCircle(self.circle_frame, probability=0, name=Jesture.gestures[i].gesture['name']))
+            self.circles[i].grid(row=i // 4, column=i % 4)
 
     def rec(self):
         Jesture.recognize(self.bracelet.data)
         for i in range(0, len(self.circles)):
             self.circles[i].update_probability(Jesture.prob[i])
-        self.after(100, self.rec)
+        if not self.continue_recognize:
+            return
+        else:
+            self.after(100, self.rec)
+
+    def stop_recognize(self):
+        self.continue_recognize = False
 
     def update_option_menu(self):
         if not self.gesture_names:
@@ -222,7 +247,8 @@ class Application(tk.Tk):
                 self.gesture_names.remove(" ")
                 self.opt_menu_gesture.config(state="normal")
         self.opt_menu_gesture['values'] = self.gesture_names
-        self.opt_menu_gesture.current(0)  # Если вы хотите установить первый элемент из списка в качестве выбранного значения
+        self.opt_menu_gesture.current(
+            0)  # Если вы хотите установить первый элемент из списка в качестве выбранного значения
 
     def new_gesture(self):
         name = self.new_gesture_entry.get()
@@ -264,7 +290,8 @@ class Application(tk.Tk):
         if len(gestures):
             gesture_ids = [gesture.gesture["index"] for gesture in gestures]
             gesture_names = [gesture.gesture["name"] for gesture in gestures]
-            gesture_recordings_num = [len([gesture.gesture["data"]]) if gesture.gesture["data"] else 0 for gesture in gestures]
+            gesture_recordings_num = [len(gesture.gesture["data"]) if gesture.gesture["data"] else 0 for gesture in
+                                      gestures]
         else:
             gesture_ids = []
             gesture_names = []
@@ -273,13 +300,13 @@ class Application(tk.Tk):
 
     def get_gesture_recordings_list(self, gesture):
         if len(Jesture.gestures):
-            return [range(0, len([gesture.gesture['data']])), [len(channel) for channel in gesture.gesture["data"]]]
+            return [range(0, len(gesture.gesture['data'])), [len(channel) for channel in gesture.gesture["data"]]]
         else:
             return []
 
 
 class ProbabilityCircle(tk.Canvas):
-    def __init__(self, master, probability, size=100, name=""):
+    def __init__(self, master, probability, size=150, name=""):
         super().__init__(master, width=size, height=size)
         self.probability = probability
         self.size = size

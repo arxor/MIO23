@@ -108,7 +108,8 @@ class Bracelet:
 
     def stop_recording(self):
         self.gesture_rec_flag = False
-        Jesture.selected_gesture.gesture["data"] = [list(queue)[-self.gesture_counter:] for queue in self.data]
+        Jesture.selected_gesture.gesture["data"].append([list(queue)[-self.gesture_counter:] for queue in self.data])
+        Jesture.selected_gesture.label_gesture()
         print(Jesture.selected_gesture.gesture["data"])
         self.gesture_counter = 0
 
