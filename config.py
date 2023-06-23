@@ -1,22 +1,46 @@
+"""
+Модуль с настройками для приложения.
+
+Этот модуль содержит глобальные переменные и настройки для работы с COM-портами, браслетом, оконными параметрами,
+цветами интерфейса и настройками графика. Он включает:
+
+    Настройки COM-портов (скорость передачи данных и тайм-аут)
+    Настройки браслета (количество каналов, названия каналов, длины буферов и диапазоны для нормализации значений)
+    Размеры окон (производное от размера экрана)
+    Цветовые схемы для интерфейса
+    Параметры графиков (названия графиков, настройки автомасштабирования, размер шрифта, размеры графика)
+
+Примечание: все значения в этом модуле являются глобальными и могут быть использованы в других модулях без
+необходимости передачи как параметров функций.
+"""
+from tkinter import ttk
+import tkinter as tk
 
 #
 # COM SETTINGS
 #
 COM_BAUD = 57600
 COM_TIMEOUT = 0.05
-
-# OPTINON MENUS
-OPTIONMENU_COM_CHOOSE = "Выберите порт"
-OPTIONMENU_NO_COM = "Нет доступных портов"
-
-#BUTTONS
-BUTTON_CONNECT = "Подключиться"
-
-# WINDOW TITLE
-WINDOW_TITLE = "Электромиографический браслет"
+#
+# BRACELET SETTINGS
+#
+NUM_CHANNELS = 9
+NUM_SIGNALS = 11
+CHANNELS = ["abp1", "abp2", "ref", "ax", "ay", "az", "gx", "gy", "gz", "ft1", "ft2"]
+BUFFERS_LEN = [1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 50, 50]
+NORMALIZE_MIN = [0, 0, 0, -16384, -16384, -16384, -32768, -32768, -32768]
+NORMALIZE_MAX = [1023, 1023, 1023, 16383, 16383, 16383, 32767, 32767, 32767]
 
 # WINDOW SIZE = screen_size / WINDOWSIZE_DIVIDER
 WINDOWSIZE_DIVIDER = 1.2
+
+#COLORS
+DARK_GREY = "#1e1e1e"
+LIGHT_GREY = "#333333"
+ACCENT_COLOR = "#2196f3"
+
+# Настройка стиля для OptionMenu
+
 
 #
 # PLOT SETTINGS
@@ -40,8 +64,4 @@ PLOT_AUTOSCALE = 50
 PLOT_FONTSIZE = 7
 
 # PLOT SIZE
-PLOT_FIGSIZE = tuple(map(lambda x: x / 1.3, (3, 1.8)))
-
-# MESSAGES (to console)
-MESSAGE_CANT_CONNECT = "Не удалось подключиться к последовательному порту."
-MESSAGE_CLOSE_WINDOW = "Закрытие окна"
+PLOT_FIGSIZE = tuple(map(lambda x: x / 1.3, (3.5, 2)))
