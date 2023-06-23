@@ -1,3 +1,7 @@
+"""
+Модуль, предоставляющий графический интерфейс пользователя (GUI) для работы с электромиографическим биоинтерфейсом.
+"""
+import time
 import tkinter
 import sys
 import processing
@@ -6,10 +10,37 @@ from config import *
 from recognition import Jesture
 import tkinter as tk
 from tkinter import ttk, StringVar
+import pyautogui
 
 
 class Application(tk.Tk):
+    """
+        Класс, представляющий основное окно приложения.
+
+        Основное окно содержит элементы управления для работы с браслетом и для отображения данных.
+
+        Атрибуты:
+            bracelet (Bracelet): Браслет, к которому подключается приложение.
+            continue_recognize (bool): Флаг, указывающий, следует ли продолжать распознавание жестов.
+            control_frame (ttk.Frame): Фрейм, содержащий элементы управления.
+            plot_frame (ttk.Frame): Фрейм для отображения графиков.
+
+        Методы:
+            set_initial_configuration(): Устанавливает начальную конфигурацию приложения.
+            set_style(): Устанавливает стиль элементов управления.
+            create_control_frame(): Создает фрейм для элементов управления.
+            create_plot_frame(): Создает фрейм для отображения графиков.
+            create_control_elements(control_frame): Создает элементы управления внутри заданного фрейма.
+            create_plot_elements(plot_frame): Создает графики внутри заданного фрейма.
+    """
+
     def __init__(self, bracelet):
+        """
+        Инициализирует основное окно приложения и задает начальную конфигурацию.
+
+        Параметры:
+            bracelet (Bracelet): Браслет, к которому подключается приложение.
+        """
         tk.Tk.__init__(self)
 
         self.bracelet = bracelet
@@ -27,11 +58,17 @@ class Application(tk.Tk):
         self.create_plot_elements(self.plot_frame)
 
     def set_initial_configuration(self):
+        """
+        Устанавливает начальную конфигурацию приложения.
+
+        Загружает данные о жестах, устанавливает размеры и положение окна, задает его название и стиль, а также определяет
+        действие при закрытии окна.
+        """
         Jesture.load_gestures()
         if len(Jesture.gestures):
             Jesture.selected_gesture = Jesture.gestures[-1]
 
-        self.title(WINDOW_TITLE)
+        self.title("Электромиографический биоинитерфейс")
 
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
@@ -49,16 +86,35 @@ class Application(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def create_control_frame(self):
+        """
+        Создает и возвращает фрейм для элементов управления.
+
+        Возвращает:
+            ttk.Frame: Фрейм для элементов управления.
+        """
         control_frame = ttk.Frame(self, style='Custom.TFrame')
         control_frame.grid(row=0, column=0, sticky="nsew")
         return control_frame
 
     def create_plot_frame(self):
+        """
+        Создает и возвращает фрейм для отображения графиков.
+
+        Возвращает:
+            ttk.Frame: Фрейм для отображения графиков.
+        """
         plot_frame = ttk.Frame(self, style='Custom.TFrame')
         plot_frame.grid(row=0, column=1, sticky="nsew")
         return plot_frame
 
     def create_control_elements(self, control_frame):
+        """
+        Создает элементы управления внутри заданного фрейма.
+
+        Параметры:
+            control_frame (ttk.Frame): Фрейм, в котором нужно создать элементы управления.
+        """
+        # Создание кнопок
         ttk.Button(self.control_frame, text="Подключиться", command=self.connect, style='Custom.TButton').grid(row=0,
                                                                                                                column=1)
         ttk.Button(self.control_frame, text="Отключиться", command=self.bracelet.disconnect,
@@ -99,8 +155,8 @@ class Application(tk.Tk):
         # Создание таблиц
         self.table1 = Table(self.control_frame, self.convert_gestures_data_for_table(),
                             ['Номер жеста', 'Название жеста', 'Число записей'], row=2, column=1)
-        self.table2 = Table(self.control_frame, self.get_gesture_recordings_list(Jesture.selected_gesture),
-                            columns=["Номер записи", "Длина записи"], row=6, column=1)
+        # self.table2 = Table(self.control_frame, self.get_gesture_recordings_list(Jesture.selected_gesture),
+        #                     columns=["Номер записи", "Длина записи"], row=6, column=1)
 
         # Создание элементов управления для выбора и создания жестов
         ttk.Label(self.control_frame, text="Выберите жест: ", style='Custom.TLabel').grid(row=4, column=0)
@@ -121,12 +177,18 @@ class Application(tk.Tk):
         self.update_option_menu()
         self.opt_menu_gesture.grid(row=4, column=1)
 
-        # Создание кругов вероятности
+        # Создание квадратов вероятности
         self.circle_frame = ttk.Frame(self.control_frame, style='Custom.TFrame')
         self.circle_frame.grid(row=8, column=0, columnspan=4, rowspan=2, sticky="nsew", pady=30)
         self.circles = []
 
     def create_plot_elements(self, plot_frame):
+        """
+        Создает графики внутри заданного фрейма.
+
+        Параметры:
+            plot_frame (ttk.Frame): Фрейм, в котором нужно создать графики.
+        """
         # графики, размещенные в plot_frame
         self.plots = []
         for i in range(NUM_SIGNALS):
@@ -139,6 +201,10 @@ class Application(tk.Tk):
                 self.plots[i].set_pos(row=i // 3 + 2, column=i % 3, min_y=0, max_y=50, a=0, b=150)
 
     def set_style(self):
+        """
+            Устанавливает пользовательский стиль для виджетов приложения.
+            Этот стиль включает параметры для кнопок, фреймов, элементов ввода и меток и др.
+        """
         style = ttk.Style(self)
 
         style.theme_create('Custom', parent='alt',
@@ -193,22 +259,33 @@ class Application(tk.Tk):
         style.theme_use('Custom')
 
     def connect(self):
+        """
+            Устанавливает соединение с браслетом и начинает чтение данных с браслета.
+        """
         self.bracelet.connect()
         if self.bracelet.serial.is_open:
             self.bracelet.start_reading()
             self.interrupt()
 
     def change_port(self, selected_com_port):
+        """
+            Изменяет порт подключения к браслету.
+        """
         self.bracelet.serial.port = selected_com_port.get()
 
     def on_closing(self):
-        # Действия при закрытии окна
+        """
+            Сохраняет данные и отключает браслет при закрытии приложения.
+        """
         Jesture.save_to_file()
         print("Закрытие приложения.")
         self.bracelet.disconnect()
-        self.destroy()  # закрыть окно
+        self.destroy()
 
     def interrupt(self):
+        """
+            Обновляет графики и выполняет прерывание через определенные интервалы времени.
+        """
         for i in range(11):
             if i <= 8:
                 self.plots[i].update_plot()
@@ -217,28 +294,54 @@ class Application(tk.Tk):
         self.after(15, self.interrupt)
 
     def prep(self):
+        """
+            Подготавливает модель для обучения и создает квадраты вероятности.
+        """
         Jesture.prepare_model()
         self.create_squares()
 
     def create_squares(self):
+        """
+            Создает квадраты вероятности для каждого из загруженных жестов.
+        """
         for i in range(0, len(Jesture.gestures)):
             self.circles.append(
-                ProbabilityCircle(self.circle_frame, probability=0, name=Jesture.gestures[i].gesture['name']))
+                ProbabilitySquare(self.circle_frame, probability=0, name=Jesture.gestures[i].gesture['name']))
             self.circles[i].grid(row=i // 4, column=i % 4)
 
     def rec(self):
+        """
+            Запускает процесс распознавания жестов и обновляет вероятности квадратов.
+        """
         Jesture.recognize(self.bracelet.data)
         for i in range(0, len(self.circles)):
-            self.circles[i].update_probability(Jesture.prob[i])
+            self.circles[i].update_probability(Jesture.prob[i + 1])
+
+        # обработка нажатий клавиш
+        if Jesture.prob[2] == 1:
+            pyautogui.press('left')
+            time.sleep(1)
+        elif Jesture.prob[3] == 1:
+            pyautogui.press('right')
+            time.sleep(1)
+        else:
+            pass
+
         if not self.continue_recognize:
             return
         else:
-            self.after(100, self.rec)
+            self.after(500, self.rec)
 
     def stop_recognize(self):
+        """
+            Останавливает процесс распознавания жестов.
+        """
         self.continue_recognize = False
 
     def update_option_menu(self):
+        """
+            Обновляет выпадающее меню с выбором жестов.
+        """
         if not self.gesture_names:
             self.gesture_names.append(" ")
             self.opt_menu_gesture.config(state="disabled")
@@ -247,21 +350,27 @@ class Application(tk.Tk):
                 self.gesture_names.remove(" ")
                 self.opt_menu_gesture.config(state="normal")
         self.opt_menu_gesture['values'] = self.gesture_names
-        self.opt_menu_gesture.current(
-            0)  # Если вы хотите установить первый элемент из списка в качестве выбранного значения
+        self.opt_menu_gesture.current(0)
 
     def new_gesture(self):
+        """
+            Добавляет новый жест в систему.
+        """
         name = self.new_gesture_entry.get()
         if Jesture.check_name(name):
             print("Такой жест уже существует")
         else:
             Jesture.selected_gesture = Jesture(name)
+            Jesture.save_to_file()
             self.selected_gesture.set(name)
             self.gesture_names.append(Jesture.selected_gesture.gesture["name"])
             self.update_option_menu()
             self.table1.update_table(self.convert_gestures_data_for_table())
 
     def del_gesture(self):
+        """
+            Удаляет выбранный жест из системы.
+        """
         if len(Jesture.gestures):
             gesture_name = Jesture.selected_gesture.gesture["name"]
             Jesture.delete_gesture(Jesture.selected_gesture)
@@ -278,14 +387,20 @@ class Application(tk.Tk):
             print("Нет жестов для удаления.")
 
     def select_gesture(self, name=None, index=None, mode=None):
+        """
+            Выбирает жест из выпадающего меню.
+        """
         selected_name = self.selected_gesture.get()
         for gesture in Jesture.gestures:
             if gesture.name == selected_name:
                 Jesture.selected_gesture = gesture
                 break
-        self.table2.update_table(self.get_gesture_recordings_list(Jesture.selected_gesture))
+        # self.table2.update_table(self.get_gesture_recordings_list(Jesture.selected_gesture))
 
     def convert_gestures_data_for_table(self):
+        """
+            Конвертирует данные жестов для отображения в таблице.
+        """
         gestures = Jesture.gestures
         if len(gestures):
             gesture_ids = [gesture.gesture["index"] for gesture in gestures]
@@ -299,13 +414,16 @@ class Application(tk.Tk):
         return [gesture_ids, gesture_names, gesture_recordings_num]
 
     def get_gesture_recordings_list(self, gesture):
+        """
+            Возвращает список записей жестов для выбранного жеста.
+        """
         if len(Jesture.gestures):
             return [range(0, len(gesture.gesture['data'])), [len(channel) for channel in gesture.gesture["data"]]]
         else:
             return []
 
 
-class ProbabilityCircle(tk.Canvas):
+class ProbabilitySquare(tk.Canvas):
     def __init__(self, master, probability, size=150, name=""):
         super().__init__(master, width=size, height=size)
         self.probability = probability
@@ -319,12 +437,10 @@ class ProbabilityCircle(tk.Canvas):
         self.update_color()
 
     def update_color(self):
-        # Преобразование вероятности в диапазон 0 - 255 для RGB
         green = int(self.probability * 255)
         red = 255 - green
         blue = 0
 
-        # Преобразование RGB в шестнадцатеричную строку
         color = '#%02x%02x%02x' % (red, green, blue)
 
         self.delete("all")
