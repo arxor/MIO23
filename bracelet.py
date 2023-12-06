@@ -33,7 +33,7 @@ class Bracelet:
         Инициализация объекта Bracelet и экземпляров классов для обработки данных.
         """
         for _ in range(NUM_SIGNALS):
-            self.data.append(deque([0] * 70, maxlen=70))
+            self.data.append(deque([0] * 200, maxlen=200))
         self.serial = serial.Serial()
         self.serial.baudrate = COM_BAUD
         self.serial.port = None
@@ -49,8 +49,6 @@ class Bracelet:
         self.ma2 = processing.MovingAverage(3)
         self.ma3 = processing.MovingAverage(3)
 
-        self.ed1 = processing.EnvelopeDetector()
-        self.ed2 = processing.EnvelopeDetector()
 
     def connect(self):
         """
@@ -99,7 +97,7 @@ class Bracelet:
         next_call = time.time()
         self.gesture_counter = 0
         while self.serial.is_open:
-            next_call += 0.02
+            next_call += 0.005
 
             if self.serial.in_waiting > 0:
                 raw_data = self.serial.readline().decode().strip()
@@ -114,27 +112,27 @@ class Bracelet:
                     for i in range(9):
                         if i == 0:
                             self.data[i].append(round(
-                                self.ed1.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i])), 1))
+                                processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]), 2))
                         elif i == 1:
                             self.data[i].append(round(
-                                self.ed2.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i])), 1))
+                                processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]), 2))
                         elif i == 3:
                             self.data[i].append(round(self.acc_x.process(
-                                self.ma1.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))), 1))
+                                self.ma1.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))), 2))
                         elif i == 4:
                             self.data[i].append(round(self.acc_y.process(
-                                self.ma2.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))), 1))
+                                self.ma2.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))), 2))
                         elif i == 5:
                             self.data[i].append(round(self.acc_z.process(
-                                self.ma3.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))), 1))
+                                self.ma3.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))), 2))
                         else:
 
                             self.data[i].append(
-                                round(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]), 1))
+                                round(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]), 2))
 
                     if self.gesture_rec_flag:
                         self.gesture_counter += 1
-                        if self.gesture_counter == 70:
+                        if self.gesture_counter == 200:
                             self.gesture_rec_flag = False
                             self.stop_recording()
 

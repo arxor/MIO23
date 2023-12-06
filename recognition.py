@@ -49,7 +49,6 @@ class Jesture:
             for i, item in enumerate(items):
                 gesture = cls(item["name"])
                 gesture.gesture["data"] = item["data"]
-                gesture.gesture["label"] = item["label"]
                 gesture.gesture["index"] = item["index"]
         except json.decoder.JSONDecodeError:
             print("Жесты не найдены.")
@@ -85,7 +84,6 @@ class Jesture:
         index (int): индекс записи для удаления.
         """
         del self.gesture['data'][index]
-        del self.gesture['label'][index]
 
     def delete_gesture(self):
         """
