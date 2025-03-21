@@ -11,21 +11,22 @@ import serial
 import serial.tools.list_ports
 import re
 
-import processing
+import Application.processing as processing
 from config import *
 from collections import deque
-from recognition import Jesture
+from Application.recognition import Jesture
 import threading
 
 
 class Bracelet:
     """
-        Класс, представляющий браслет, подключенный через последовательный порт.
-        Он обеспечивает подключение, чтение данных, их обработку и распознавание жестов.
+    Класс, представляющий браслет, подключенный через последовательный порт.
+    Он обеспечивает подключение, чтение данных, их обработку и распознавание жестов.
 
-        Атрибуты:
-        data : список очередей, содержащих данные от браслета.
+    Атрибуты:
+    data : список очередей, содержащих данные от браслета.
     """
+
     data = []
 
     def __init__(self):
@@ -103,7 +104,7 @@ class Bracelet:
 
             if self.serial.in_waiting > 0:
                 raw_data = self.serial.readline().decode().strip()
-                all_data = [int(item) for item in re.findall(r'-?\d+', raw_data)]
+                all_data = [int(item) for item in re.findall(r"-?\d+", raw_data)]
 
                 all_data += [0] * (9 - len(all_data))
 
@@ -113,24 +114,82 @@ class Bracelet:
                     processing.process(self)
                     for i in range(9):
                         if i == 0:
-                            self.data[i].append(round(
-                                self.ed1.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i])), 1))
+                            self.data[i].append(
+                                round(
+                                    self.ed1.process(
+                                        processing.normalize(
+                                            dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]
+                                        )
+                                    ),
+                                    1,
+                                )
+                            )
                         elif i == 1:
-                            self.data[i].append(round(
-                                self.ed2.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i])), 1))
+                            self.data[i].append(
+                                round(
+                                    self.ed2.process(
+                                        processing.normalize(
+                                            dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]
+                                        )
+                                    ),
+                                    1,
+                                )
+                            )
                         elif i == 3:
-                            self.data[i].append(round(self.acc_x.process(
-                                self.ma1.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))), 1))
+                            self.data[i].append(
+                                round(
+                                    self.acc_x.process(
+                                        self.ma1.process(
+                                            processing.normalize(
+                                                dta[i],
+                                                NORMALIZE_MIN[i],
+                                                NORMALIZE_MAX[i],
+                                            )
+                                        )
+                                    ),
+                                    1,
+                                )
+                            )
                         elif i == 4:
-                            self.data[i].append(round(self.acc_y.process(
-                                self.ma2.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))), 1))
+                            self.data[i].append(
+                                round(
+                                    self.acc_y.process(
+                                        self.ma2.process(
+                                            processing.normalize(
+                                                dta[i],
+                                                NORMALIZE_MIN[i],
+                                                NORMALIZE_MAX[i],
+                                            )
+                                        )
+                                    ),
+                                    1,
+                                )
+                            )
                         elif i == 5:
-                            self.data[i].append(round(self.acc_z.process(
-                                self.ma3.process(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]))), 1))
+                            self.data[i].append(
+                                round(
+                                    self.acc_z.process(
+                                        self.ma3.process(
+                                            processing.normalize(
+                                                dta[i],
+                                                NORMALIZE_MIN[i],
+                                                NORMALIZE_MAX[i],
+                                            )
+                                        )
+                                    ),
+                                    1,
+                                )
+                            )
                         else:
 
                             self.data[i].append(
-                                round(processing.normalize(dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]), 1))
+                                round(
+                                    processing.normalize(
+                                        dta[i], NORMALIZE_MIN[i], NORMALIZE_MAX[i]
+                                    ),
+                                    1,
+                                )
+                            )
 
                     if self.gesture_rec_flag:
                         self.gesture_counter += 1
@@ -160,7 +219,9 @@ class Bracelet:
         Остановка записи данных и передача последнего сегмента данных в объект жеста для распознавания жестов.
         """
         self.gesture_rec_flag = False
-        Jesture.selected_gesture.add_recording([list(queue)[-70:] for queue in self.data])
+        Jesture.selected_gesture.add_recording(
+            [list(queue)[-70:] for queue in self.data]
+        )
         self.gesture_counter = 0
 
     @classmethod
